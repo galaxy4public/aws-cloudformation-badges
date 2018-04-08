@@ -1,0 +1,247 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: A nestable template to provide custom badges support to CodeBuild and CodePipeline
+
+Parameters:
+  CodeBuildProjects:
+    Description: A list of CodeBuild projects to generate badges for (leave empty to disable CodeBuild support)
+    Type: List<String>
+    Default: ""
+  CodePipelines:
+    Description: A list of CodePipeline names to generate bages for (leave empty to disable CodePipeline support)
+    Type: List<String>
+    Default: ""
+
+Conditions:
+  useCodeBuild: !Not
+    - !Equals
+      - !Join
+        - ''
+        - !Ref  CodeBuildProjects
+      - ''
+  useCodePipeline: !Not
+    - !Equals
+      - !Join
+        - ''
+        - !Ref  CodePipelines
+      - ''
+
+Resources:
+  Bucket:
+    Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Retain
+    Properties:
+      AccessControl: Private
+
+  Lambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Generates the corresponding badges for specified CodeBuild project and CodePipelines
+      Environment:
+        Variables:
+          BUCKET: !Ref Bucket
+      Code:
+        ZipFile: >
+          const AWS = require('aws-sdk');
+          const s3 = new AWS.S3();
+          const fs = require("fs");
+          const badge_xml = 'PD94bWwgdmVyc2lvbj0iMS4wIj8+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iQFdAIiBoZWlnaHQ9IjIwIj4KICA8Y2xpcFBhdGggaWQ9ImEiPgogICAgPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgcng9IjMiLz4KICA8L2NsaXBQYXRoPgogIDxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDI9IjAiIHkyPSIxMDAlIj4KICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2JiYiIgc3RvcC1vcGFjaXR5PSIuMSIvPgogICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLW9wYWNpdHk9Ii4xIi8+CiAgPC9saW5lYXJHcmFkaWVudD4KICA8ZyBjbGlwLXBhdGg9InVybCgjYSkiPgogICAgPHBhdGggZmlsbD0iIzU1NSIgZD0iTTAgMCBoQFAxSEB2MjBIMHoiLz4KICAgIDxwYXRoIGZpbGw9IiNAQ0AiIGQ9Ik1AUDFIQCAwaEBQMkhAdjIwSEBQMUhAeiIvPgogICAgPHBhdGggZmlsbD0idXJsKCNiKSIgZD0iTTAgMGhAV0B2MjBIMHoiLz4KICA8L2c+CiAgPGRlZnM+CiAgICA8ZmlsdGVyIGlkPSJjIiB4PSIwIiB5PSIwIj4KICAgICAgPGZlT2Zmc2V0IHJlc3VsdD0ib2ZmT3V0IiBpbj0iU291cmNlQWxwaGEiIGR4PSIxMCIgZHk9IjEwIiAvPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgcmVzdWx0PSJibHVyT3V0IiBpbj0ib2ZmT3V0IiBzdGREZXZpYXRpb249IjEwIiAvPgogICAgICA8ZmVCbGVuZCBpbj0iU291cmNlR3JhcGhpYyIgaW4yPSJibHVyT3V0IiBtb2RlPSJub3JtYWwiIC8+CiAgICA8L2ZpbHRlcj4KICA8L2RlZnM+CiAgPGcgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkRlamFWdSBTYW5zLFZlcmRhbmEsR2VuZXZhLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEwIj4KICAgIDx0ZXh0IHg9IkBQMVRAIiB5PSIxNDAiIHRyYW5zZm9ybT0ic2NhbGUoLjEpIiBmaWx0ZXI9InVybCgjYykiPkBQMUxAPC90ZXh0PgogICAgPHRleHQgeD0iQFAyVEAiIHk9IjE0MCIgdHJhbnNmb3JtPSJzY2FsZSguMSkiIGZpbHRlcj0idXJsKCNjKSI+QFAyTEA8L3RleHQ+CiAgPC9nPgo8L3N2Zz4K';
+          function b(W,C,P1H,P1T,P1L,P2H,P2T,P2L) { return { W,C,P1H,P1T,P1L,P2H,P2T,P2L } }
+          var bp = [];
+          bp['build-FAILED'] = b(78,'E05D44',37,195,'build',41,555,'failed');
+          bp['build-IN_PROGRESS'] = b(109,'007EC6',37,195,'build',72,720,'in progress');
+          bp['build-STOPPED'] = b(90,'E05D44',37,195,'build',53,625,'stopped');
+          bp['build-SUCCEEDED'] = b(105,'97CA00',37,195,'build',68,700,'succeeded');
+          bp['pipeline-CANCELLED'] = b(112,'E05D44',53,275,'pipeline',59,805,'cancelled');
+          bp['pipeline-FAILED'] = b(92,'E05D44',53,275,'pipeline',39,715,'failed');
+          bp['pipeline-RESUMED'] = b(112,'FE7D37',53,275,'pipeline',59,805,'resumed');
+          bp['pipeline-STARTED'] = b(102,'007EC6',53,275,'pipeline',49,765,'started');
+          bp['pipeline-SUCCEEDED'] = b(120,'97CA00',53,275,'pipeline',67,855,'succeeded');
+          bp['pipeline-SUPERSEDED'] = b(126,'007EC6',53,275,'pipeline',73,885,'superseded');
+
+          function i(t,p) {
+            return t.replace(/@W@/g,p.W).replace(/@C@/,p.C).replace(/@P1H@/g,p.P1H).replace(/@P1T@/g,p.P1T).replace(/@P1L@/g,p.P1L).replace(/@P2H@/g,p.P2H).replace(/@P2T@/g,p.P2T).replace(/@P2L@/g,p.P2L)
+          }
+
+          exports.handler = (event, context, callback) => {
+            const bucket = process.env.BUCKET;
+
+            if (bucket && bucket !== '') {
+              console.log(`Working with the ${bucket} bucket ...`);
+
+              console.log(JSON.stringify(event));
+              const isPipeline = typeof event.detail.pipeline !== "undefined";
+              const project = isPipeline ? event.detail.pipeline : event.detail['project-name'];
+              const status = isPipeline ? event.detail.state : event.detail['build-status'];
+              const badge = `${isPipeline ? 'pipeline' : 'build'}-${status}`;
+              const key = `${project}.svg`;
+
+              console.log(`Build for project ${project} was a ${status} so uploading` +
+                ` the ${badge} image to s3://${bucket}/${key}`);
+
+              const params = {
+                Bucket: bucket,
+                Key: key,
+                Body: i(Buffer.from(badge_xml, 'base64').toString('ascii'), bp[badge]),
+                ACL: 'public-read',
+                ContentType: 'image/svg+xml'
+              };
+
+              s3.putObject(params, (err, data) => {
+                if (err) {
+                  const message = `Failed to upload image to S3: ${err}`;
+                  console.error(message);
+                  callback(message, null);
+                } else {
+                  const message = 'Upload complete!';
+                  console.log(message);
+                  callback(null, message);
+                }
+              });
+            } else {
+              callback('You must set the "BUCKET" environment variable to the name' +
+                'of the bucket that your badges will be uploaded to.', null);
+            }
+          };
+      Handler: index.handler
+      Runtime: nodejs6.10
+      Timeout: 60
+      Role: !GetAtt
+       - LambdaExecutionRole
+       - Arn
+
+  CodeBuildEvent:
+    Condition: useCodeBuild
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: Monitors for the CodeBuild state changes
+      EventPattern:
+        source:
+          - aws.codebuild
+        detail-type:
+          - CodeBuild Build State Change
+        detail:
+          project-name: !Ref CodeBuildProjects
+      Targets:
+        -
+          Arn: !GetAtt
+            - Lambda
+            - Arn
+          Id: LambdaForCodeBuild
+
+  CodePipelineEvent:
+    Condition: useCodePipeline
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: Monitors for the CodePipeline state changes
+      EventPattern:
+        source:
+          - aws.codepipeline
+        detail-type:
+          - CodePipeline Pipeline Execution State Change
+        detail:
+          pipeline: !Ref CodePipelines
+      Targets:
+        -
+          Arn: !GetAtt
+            - Lambda
+            - Arn
+          Id: LambdaForCodeBuild
+
+  PermissionForEventsToInvokeLambda1:
+    Condition: useCodeBuild
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName: !Ref Lambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt
+        - CodeBuildEvent
+        - Arn
+
+  PermissionForEventsToInvokeLambda2:
+    Condition: useCodePipeline
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName: !Ref Lambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt
+        - CodePipelineEvent
+        - Arn
+
+  LambdaLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DeletionPolicy: Retain
+    Properties: 
+      LogGroupName: !Sub '/aws/lambda/${Lambda}'
+      RetentionInDays: 365
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+            - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Effect: Allow
+      Path: /
+      Policies:
+        - PolicyName: BadgesLambdaExecutionPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: CloudWatchLogs
+                Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource:
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-*'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-*:*'
+              - Sid: UpdateBadgesInS3
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                Resource:
+                  - !Join
+                    - ''
+                    - - !GetAtt
+                        - Bucket
+                        - Arn
+                      - '/*'
+
+Outputs:
+  BucketName:
+    Description: The name of the S3 bucket where badges are created
+    Value: !Ref Bucket
+
+  BucketArn:
+    Description: The ARN of the S3 bucket where badges are created
+    Value: !GetAtt
+      - Bucket
+      - Arn
+
+  BucketUrl:
+    Description: The IPv4 domain name of the S3 Bucket where badges are created
+    Value: !GetAtt
+      - Bucket
+      - DomainName
+
+  BucketDualStackUrl:
+    Description: The IPv6 domain name of the S3 Bucket where badges are created
+    Value: !GetAtt
+      - Bucket
+      - DualStackDomainName
+
+  BucketWebsiteUrl:
+    Description: The static website endpoint URL for the S3 Bucket where badges are created
+    Value: !GetAtt
+      - Bucket
+      - WebsiteURL
+
