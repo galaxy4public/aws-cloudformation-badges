@@ -1,0 +1,5 @@
+The Lambda code is using portions of NodeJS code which bear the following copyright:
+Copyright (c) 2017 James Sherwood-Jones
+
+The rest is Public Domain.  I would appreciate it if you provide some kind of
+attribution if you are just using the stack as is :)
