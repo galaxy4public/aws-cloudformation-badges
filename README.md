@@ -19,7 +19,7 @@ Part of another template (nested stack):
 …
 "Resources": {
 …
-        "VPC": {
+        "Badges": {
                 "Type": "AWS::CloudFormation::Stack",
                 "Properties": {
                         "TemplateURL": { "Fn::Join": [ "", [ "https://s3-", { "Ref": "AWS::Region" }, ".amazonaws.com/", { "Ref": "BucketWithTemplate" }, "/badges.template" ] ] },
