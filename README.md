@@ -21,7 +21,8 @@ templates!).
 Synopsis
 --------
 
-Standalone stack deployment:
+Standalone stack deployment monitoring particular CodeBuild projects and
+CodePipelines:
 ```bash
 $ aws cloudformation deploy --template-file badges.template \
         --stack-name badges \
@@ -30,6 +31,19 @@ $ aws cloudformation deploy --template-file badges.template \
                 CodePipelines=pipeline1,pipeline2 \
         --capabilities CAPABILITY_IAM
 ```
+
+Standalone stack deployment monitoring _ALL_ CodeBuild projects and
+CodePipelines in the AWS account (please keep in minds that in this case the
+badges are NOT pre-created):
+```bash
+$ aws cloudformation deploy --template-file badges.template \
+        --stack-name badges \
+        --parameter-overrides \
+                'CodeBuildProjects=*' \
+                'CodePipelines=*' \
+        --capabilities CAPABILITY_IAM
+```
+
 
 Part of another template (nested stack) using JSON notation:
 ```json

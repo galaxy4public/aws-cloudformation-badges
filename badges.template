@@ -5,11 +5,11 @@ Description: A nestable template to provide custom badges support to CodeBuild a
 
 Parameters:
   CodeBuildProjects:
-    Description: A list of CodeBuild projects to generate badges for (leave empty to disable CodeBuild support)
+    Description: A list of CodeBuild projects to generate badges for (specify '*' to monitor all or leave empty to disable CodeBuild support)
     Type: List<String>
     Default: ""
   CodePipelines:
-    Description: A list of CodePipeline names to generate badges for (leave empty to disable CodePipeline support)
+    Description: A list of CodePipeline names to generate badges for (specify '*' to monitor all or leave empty to disable CodePipeline support)
     Type: List<String>
     Default: ""
 
@@ -26,6 +26,16 @@ Conditions:
         - ''
         - !Ref  CodePipelines
       - ''
+  useAllCodeBuild: !Equals
+    - !Join
+      - ''
+      - !Ref  CodeBuildProjects
+    - '*'
+  useAllCodePipeline: !Equals
+    - !Join
+      - ''
+      - !Ref  CodePipelines
+    - '*'
 
 Resources:
   Bucket:
@@ -42,7 +52,7 @@ Resources:
         Variables:
           BUCKET: !Ref Bucket
       Code:
-	# I am not particularly proud of the quality and readability of the
+        # I am not particularly proud of the quality and readability of the
         # following code, but the goal was to fit all the required logic
         # into 4K so no external dependencies would be required.  The
         # goal was achieved, but the readability of the code was really
@@ -67,7 +77,8 @@ Resources:
           def o(b,s,r,l):
            if s in r:
             for p in r[s]:
-             u(b,l,p,'UNKNOWN')
+             if p != '*':
+              u(b,l,p,'UNKNOWN')
 
           def handler(e,c):
            b=os.environ['BUCKET'];t='RequestType'
@@ -116,6 +127,23 @@ Resources:
             - Arn
           Id: LambdaForCodeBuild
 
+  CodeBuildEvent:
+    Condition: useAllCodeBuild
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: Monitors for the CodeBuild state changes
+      EventPattern:
+        source:
+          - aws.codebuild
+        detail-type:
+          - CodeBuild Build State Change
+      Targets:
+        -
+          Arn: !GetAtt
+            - Lambda
+            - Arn
+          Id: LambdaForCodeBuild
+
   CodePipelineEvent:
     Condition: useCodePipeline
     Type: "AWS::Events::Rule"
@@ -128,6 +156,23 @@ Resources:
           - CodePipeline Pipeline Execution State Change
         detail:
           pipeline: !Ref CodePipelines
+      Targets:
+        -
+          Arn: !GetAtt
+            - Lambda
+            - Arn
+          Id: LambdaForCodeBuild
+
+  CodePipelineEvent:
+    Condition: useAllCodePipeline
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: Monitors for the CodePipeline state changes
+      EventPattern:
+        source:
+          - aws.codepipeline
+        detail-type:
+          - CodePipeline Pipeline Execution State Change
       Targets:
         -
           Arn: !GetAtt
