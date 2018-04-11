@@ -103,7 +103,7 @@ The current look and feel of the generated badges is as follows:
  ![pipeline-UKNOWN](samples/pipeline-UNKNOWN.svg) | ![build-UNKNOWN](samples/build-UNKNOWN.svg)
  ![pipeline-STARTED](samples/pipeline-STARTED.svg) | ![build-IN_PROGRESS](samples/build-IN_PROGRESS.svg)
  ![pipeline-SUCCEEDED](samples/pipeline-SUCCEEDED.svg) | ![build-SUCCEEDED](samples/build-SUCCEEDED.svg)
- ![pipeline-CANCELLED](samples/pipeline-CANCELLED.svg) | ![build-STOPPED](samples/build-STOPPED.svg)
+ ![pipeline-CANCELED](samples/pipeline-CANCELED.svg) | ![build-STOPPED](samples/build-STOPPED.svg)
  ![pipeline-FAILED](samples/pipeline-FAILED.svg) | ![build-FAILED](samples/build-FAILED.svg)
  ![pipeline-RESUMED](samples/pipeline-RESUMED.svg) |
  ![pipeline-SUPERSEDED](samples/pipeline-SUPERSEDED.svg) |
