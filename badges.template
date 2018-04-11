@@ -9,7 +9,7 @@ Parameters:
     Type: List<String>
     Default: ""
   CodePipelines:
-    Description: A list of CodePipeline names to generate bages for (leave empty to disable CodePipeline support)
+    Description: A list of CodePipeline names to generate badges for (leave empty to disable CodePipeline support)
     Type: List<String>
     Default: ""
 
