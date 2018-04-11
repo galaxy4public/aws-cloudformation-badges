@@ -43,7 +43,8 @@ Part of another template (nested stack) using JSON notation:
                         "Parameters": {
                                 "CodeBuildProjects": [
                                         { "Ref": "Project1" },
-                                        { "Ref": "Project2" }
+                                        { "Ref": "Project2" },
+                                        { "Ref": "Project3" }
                                 ],
                                 "CodePipelines": [
                                         { "Ref": "Pipeline1" },
@@ -54,6 +55,7 @@ Part of another template (nested stack) using JSON notation:
                 }
         },
 …
+}
 ```
 
 Part of anothr template (a nested stack) using YAML notation:
@@ -69,6 +71,7 @@ Resources:
                 CodeBuildProjects:
                     - Project1
                     - Project2
+                    - Project3
                 CodePipelines:
                     - Pipeline1
                     - Pipeline2
@@ -88,7 +91,7 @@ two-stage deployment of Lambda the badges are dynamically generated in the
 in-line code.
 
 The badge template can be found in the [badge.svg.in](badge.svg.in) file in this
-repository.  The file contains some placeholders (such as @W@ for width,
+repository.  The file contains some placeholders (such as `@W@` for width,
 etc.) which are replaced at runtime before the final badge file is
 uploaded to the S3 bucket.
 
@@ -113,21 +116,21 @@ Linking to the badges
 
 There are two options on how you can expose a badge on a page:
 
-1. You can just use the `&lt;img src="URL/(pipeline|badge)/(name_of_pipeline_or_badge).svg" /&gt;`.
+1. You can just use the `<img src="URL/(pipeline|badge)/(name_of_pipeline_or_badge).svg" />`.
    This will render the badge once and to get the badge update you will need to
    reload the page (or the badge element).  The `URL` can be retrieved from the
    stack output (it is either `BucketStackUrl` if you care about IPv4 addresses
    only or `BucketDualStackUrl` if you want a URL that also resoves to the IPv6
    addresses).
 
-2. If you can use `&lt;iframe src=… /&gt;`, `&lt;embed src=… /&gt;`, or
-   `&lt;object data=… /&gt;` for embedding the SVG badge, then you will get the
+2. If you can use `<iframe src=… /&gt;`, `&lt;embed src=… />`, or
+   `<object data=… />` for embedding the SVG badge, then you will get the
    automatic badge refresh for free (thanks for the small script incorporated
    inside the generated badge SVG).
 
    By default, the refresh time is set to 30 seconds, but you can specify your
    own frequency by appending `#t=NUMBER` at the end of the badge URL, e.g.
    to refresh the badge every 5 seconds you may want to embed the badge as
-   follows: `&lt;embed src="URL/(pipeline|badge)/(name_of_pipeline_or_badge).svg#t=5000" /&gt;`
+   follows: `<embed src="URL/(pipeline|badge)/(name_of_pipeline_or_badge).svg#t=5000" />`
 
 Have fun!
