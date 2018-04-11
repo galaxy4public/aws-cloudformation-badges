@@ -1,22 +1,5 @@
 <?xml version="1.0"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="@W@" height="20">
-  <script><![CDATA[
-  var t=30000;
-  var l=document.location;
-  var h=l.hash.substr(1);
-  var q=h.split('&').reduce(function(r,i){
-    var p=i.split('=');
-    r[p[0]]=p[1];
-    return r;
-  },{});
-  if(q['t']){t=q['t']}
-  function r() {
-    l.reload(true);
-    setTimeout(r,t);
-  }
-  setTimeout(r,t);
-  ]]>
-  </script>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="105" height="20">
   <clipPath id="a">
     <rect width="100%" height="100%" rx="3"/>
   </clipPath>
@@ -25,9 +8,9 @@
     <stop offset="1" stop-opacity=".1"/>
   </linearGradient>
   <g clip-path="url(#a)">
-    <path fill="#555" d="M0 0 h@P1H@v20H0z"/>
-    <path fill="#@C@" d="M@P1H@ 0h@P2H@v20H@P1H@z"/>
-    <path fill="url(#b)" d="M0 0h@W@v20H0z"/>
+    <path fill="#555" d="M0 0 h37v20H0z"/>
+    <path fill="#97CA00" d="M37 0h68v20H37z"/>
+    <path fill="url(#b)" d="M0 0h105v20H0z"/>
   </g>
   <defs>
     <filter id="c" x="0" y="0">
@@ -37,7 +20,7 @@
     </filter>
   </defs>
   <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="110">
-    <text x="@P1T@" y="140" transform="scale(.1)" filter="url(#c)">@P1L@</text>
-    <text x="@P2T@" y="140" transform="scale(.1)" filter="url(#c)">@P2L@</text>
+    <text x="195" y="140" transform="scale(.1)" filter="url(#c)">build</text>
+    <text x="700" y="140" transform="scale(.1)" filter="url(#c)">succeeded</text>
   </g>
 </svg>

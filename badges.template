@@ -40,70 +40,56 @@ Resources:
         Variables:
           BUCKET: !Ref Bucket
       Code:
-        ZipFile: >
-          const AWS = require('aws-sdk');
-          const s3 = new AWS.S3();
-          const fs = require("fs");
-          const badge_xml = 'PD94bWwgdmVyc2lvbj0iMS4wIj8+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iQFdAIiBoZWlnaHQ9IjIwIj4KICA8Y2xpcFBhdGggaWQ9ImEiPgogICAgPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgcng9IjMiLz4KICA8L2NsaXBQYXRoPgogIDxsaW5lYXJHcmFkaWVudCBpZD0iYiIgeDI9IjAiIHkyPSIxMDAlIj4KICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2JiYiIgc3RvcC1vcGFjaXR5PSIuMSIvPgogICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLW9wYWNpdHk9Ii4xIi8+CiAgPC9saW5lYXJHcmFkaWVudD4KICA8ZyBjbGlwLXBhdGg9InVybCgjYSkiPgogICAgPHBhdGggZmlsbD0iIzU1NSIgZD0iTTAgMCBoQFAxSEB2MjBIMHoiLz4KICAgIDxwYXRoIGZpbGw9IiNAQ0AiIGQ9Ik1AUDFIQCAwaEBQMkhAdjIwSEBQMUhAeiIvPgogICAgPHBhdGggZmlsbD0idXJsKCNiKSIgZD0iTTAgMGhAV0B2MjBIMHoiLz4KICA8L2c+CiAgPGRlZnM+CiAgICA8ZmlsdGVyIGlkPSJjIiB4PSIwIiB5PSIwIj4KICAgICAgPGZlT2Zmc2V0IHJlc3VsdD0ib2ZmT3V0IiBpbj0iU291cmNlQWxwaGEiIGR4PSIxMCIgZHk9IjEwIiAvPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgcmVzdWx0PSJibHVyT3V0IiBpbj0ib2ZmT3V0IiBzdGREZXZpYXRpb249IjEwIiAvPgogICAgICA8ZmVCbGVuZCBpbj0iU291cmNlR3JhcGhpYyIgaW4yPSJibHVyT3V0IiBtb2RlPSJub3JtYWwiIC8+CiAgICA8L2ZpbHRlcj4KICA8L2RlZnM+CiAgPGcgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkRlamFWdSBTYW5zLFZlcmRhbmEsR2VuZXZhLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEwIj4KICAgIDx0ZXh0IHg9IkBQMVRAIiB5PSIxNDAiIHRyYW5zZm9ybT0ic2NhbGUoLjEpIiBmaWx0ZXI9InVybCgjYykiPkBQMUxAPC90ZXh0PgogICAgPHRleHQgeD0iQFAyVEAiIHk9IjE0MCIgdHJhbnNmb3JtPSJzY2FsZSguMSkiIGZpbHRlcj0idXJsKCNjKSI+QFAyTEA8L3RleHQ+CiAgPC9nPgo8L3N2Zz4K';
-          function b(W,C,P1H,P1T,P1L,P2H,P2T,P2L) { return { W,C,P1H,P1T,P1L,P2H,P2T,P2L } }
-          var bp = [];
-          bp['build-FAILED'] = b(78,'E05D44',37,195,'build',41,555,'failed');
-          bp['build-IN_PROGRESS'] = b(109,'007EC6',37,195,'build',72,720,'in progress');
-          bp['build-STOPPED'] = b(90,'E05D44',37,195,'build',53,625,'stopped');
-          bp['build-SUCCEEDED'] = b(105,'97CA00',37,195,'build',68,700,'succeeded');
-          bp['pipeline-CANCELLED'] = b(112,'E05D44',53,275,'pipeline',59,805,'cancelled');
-          bp['pipeline-FAILED'] = b(92,'E05D44',53,275,'pipeline',39,715,'failed');
-          bp['pipeline-RESUMED'] = b(112,'FE7D37',53,275,'pipeline',59,805,'resumed');
-          bp['pipeline-STARTED'] = b(102,'007EC6',53,275,'pipeline',49,765,'started');
-          bp['pipeline-SUCCEEDED'] = b(120,'97CA00',53,275,'pipeline',67,855,'succeeded');
-          bp['pipeline-SUPERSEDED'] = b(126,'007EC6',53,275,'pipeline',73,885,'superseded');
+	# I am not particularly proud of the quality and readability of the
+        # following code, but the goal was to fit all the required logic
+        # into 4K so no external dependencies would be required.  The
+        # goal was achieved, but the readability of the code was really
+        # sacrificed to get there.
+        #                                                   -- (GM)
+        ZipFile: |-
+          import cfnresponse
+          import os,sys,boto3,zlib,base64
+          from io import StringIO
 
-          function i(t,p) {
-            return t.replace(/@W@/g,p.W).replace(/@C@/,p.C).replace(/@P1H@/g,p.P1H).replace(/@P1T@/g,p.P1T).replace(/@P1L@/g,p.P1L).replace(/@P2H@/g,p.P2H).replace(/@P2T@/g,p.P2T).replace(/@P2L@/g,p.P2L)
-          }
+          def badge(l,s):
+           t='H4sIAJVvy1oCA51UTW+jMBD9K15XuwEpAUO3lwVT+iG1h121UqvuIcrBARO8cjC1TZI2yn/fMSRtWu1pL9gev/dm5o1Fer5ZSrTi2gjVUBwFBJ9nqVktEMQbQ3FtbfsjDNfrdbA+DZRehDEhJAQERmtR2pri/HeOUc3ForYUxwQDv9CitVn6ZXp1ffF4MV0xjSw9BSJJ3F7SUhXdkjc2kKpgFnL38ZrKoGamDkw3N1Z7kd+HnylEWimsN/o28gPNy67gXtU1hWN6eiz8rcO1VBxwdOQnetpOyWxG22k0SzS3nW6QTnbj7c5PROU9T0d2NPO3lg673UEQac9HWwl5pGKlZ3XH/cRw+yiWXHUW8lk/2X0OzGZZGh4aL6Ro75mtkSgpZuCI5oU9+BUR8vXdsOGkNxSf4hAkDtQslaLhTN9oVgpwqpeaY7SJKSYYvcR7KrhtVYtUVUFF/ZU7Twollab4ZD6f7yOqZYWwLxQHkUv0gRX9GxN+LCFLF8iVN2mZ66PT0jthPlTgzqgSUkLCs7MzjKDUXwQRVOf30W2+iskteXWCx8D8Kh+APQYRwMYDtg98xvfZ5v6bdg3P7l04XGRpySuTpYC2XPduFeDWYJb7whW/6/tFmptOQtvQ/l1nMRLw9B9Upwt+IduaQY6NcxfWl2ENHfmGdcYI1lzKTr9JzOHwpnHQM7a85ivRP+wjgUvJm/IoGfja1qJw3PhIaalKTnGj9JLJnhkOPcFmaHFxsLCqKows39gJa4razXspylJyjCrV2EnFlkJCB9f8D3vq0ANrzPiJ65I1bHzDG75iYwOxieFaVHuOEa+QPIqcX07ZOQjzeMx7F6Pv0IvVQKqgPIpNwST3ggjGMtS4n1MBrwJYP/M0dCLHUvF/ScXvUm7U7v+T/QVlT4YuvAQAAA==';bl='build';pl='pipeline';b={bl:{'UNKNOWN':{'W':'95','C':'909090','P1H':'37','P1T':'195','P1L':bl,'P2H':'58','P2T':'645','P2L':'unknown'},'FAILED':{'W':'78','C':'E05D44','P1H':'37','P1T':'195','P1L':bl,'P2H':'41','P2T':'555','P2L':'failed'},'IN_PROGRESS':{'W':'109','C':'007EC6','P1H':'37','P1T':'195','P1L':bl,'P2H':'72','P2T':'720','P2L':'in progress'},'STOPPED':{'W':'90','C':'E05D44','P1H':'37','P1T':'195','P1L':bl,'P2H':'53','P2T':'625','P2L':'stopped'},'SUCCEEDED':{'W':'105','C':'97CA00','P1H':'37','P1T':'195','P1L':bl,'P2H':'68','P2T':'700','P2L':'succeeded'}},pl:{'UNKNOWN':{'W':'112','C':'909090','P1H':'53','P1T':'275','P1L':pl,'P2H':'59','P2T':'805','P2L':'unknown'},'CANCELLED':{'W':'112','C':'E05D44','P1H':'53','P1T':'275','P1L':pl,'P2H':'59','P2T':'805','P2L':'cancelled'},'FAILED':{'W':'92','C':'E05D44','P1H':'53','P1T':'275','P1L':pl,'P2H':'39','P2T':'715','P2L':'failed'},'RESUMED':{'W':'112','C':'FE7D37','P1H':'53','P1T':'275','P1L':pl,'P2H':'59','P2T':'805','P2L':'resumed'},'STARTED':{'W':'102','C':'007EC6','P1H':'53','P1T':'275','P1L':pl,'P2H':'49','P2T':'765','P2L':'started'},'SUCCEEDED':{'W':'120','C':'97CA00','P1H':'53','P1T':'275','P1L':pl,'P2H':'67','P2T':'855','P2L':'succeeded'},'SUPERSEDED':{'W':'126','C':'007EC6','P1H':'53','P1T':'275','P1L':pl,'P2H':'73','P2T':'885','P2L':'superseded'}}}
+           try:
+            d=b[l][s]
+           except:
+            d=b[l]['UNKNOWN']
+           return zlib.decompress(base64.b64decode(t),47).decode('ascii').replace('@W@',d['W']).replace('@C@',d['C']).replace('@P1H@',d['P1H']).replace('@P1T@',d['P1T']).replace('@P1L@',d['P1L']).replace('@P2H@',d['P2H']).replace('@P2T@',d['P2T']).replace('@P2L@',d['P2L'])
 
-          exports.handler = (event, context, callback) => {
-            const bucket = process.env.BUCKET;
+          def u(b,l,p,s):
+           boto3.client('s3').put_object(Bucket=b,Key='{}/{}.svg'.format(l,p),Body=StringIO(badge(l,s)).getvalue().encode(),ContentType='image/svg+xml',ACL='public-read')
 
-            if (bucket && bucket !== '') {
-              console.log(`Working with the ${bucket} bucket ...`);
+          def o(b,s,r,l):
+           if s in r:
+            for p in r[s]:
+             u(b,l,p,'UNKNOWN')
 
-              console.log(JSON.stringify(event));
-              const isPipeline = typeof event.detail.pipeline !== "undefined";
-              const project = isPipeline ? event.detail.pipeline : event.detail['project-name'];
-              const status = isPipeline ? event.detail.state : event.detail['build-status'];
-              const badge = `${isPipeline ? 'pipeline' : 'build'}-${status}`;
-              const key = `${project}.svg`;
+          def handler(e,c):
+           b=os.environ['BUCKET'];t='RequestType'
+           if t in e:
+            if e[t]=='Create':
+             r=e['ResourceProperties'];o(b,'CodePipelines',r,'pipeline');o(b,'CodeBuildProjects',r,'build')
+            cfnresponse.send(e,c,cfnresponse.SUCCESS,{},"Custom");return
 
-              console.log(`Build for project ${project} was a ${status} so uploading` +
-                ` the ${badge} image to s3://${bucket}/${key}`);
+           r=e['detail']
+           if 'pipeline' in r:
+            l='pipeline';p=r[l];s=r['state']
+           elif 'project-name' in r:
+            l='build';p=r['project-name'];s=r['build-status']
+           else:
+            raise ValueError('Unknown event')
 
-              const params = {
-                Bucket: bucket,
-                Key: key,
-                Body: i(Buffer.from(badge_xml, 'base64').toString('ascii'), bp[badge]),
-                ACL: 'public-read',
-                ContentType: 'image/svg+xml'
-              };
-
-              s3.putObject(params, (err, data) => {
-                if (err) {
-                  const message = `Failed to upload image to S3: ${err}`;
-                  console.error(message);
-                  callback(message, null);
-                } else {
-                  const message = 'Upload complete!';
-                  console.log(message);
-                  callback(null, message);
-                }
-              });
-            } else {
-              callback('You must set the "BUCKET" environment variable to the name' +
-                'of the bucket that your badges will be uploaded to.', null);
-            }
-          };
+           print('{}/{} => {}'.format(l,p,s))
+           try:
+            u(b,l,p,s)
+           except:
+            print('FAILED ({})'.format(sys.exc_info()));return
+           print('SUCCESS s3://{}/{}/{}'.format(b,l,p));return
       Handler: index.handler
-      Runtime: nodejs6.10
+      Runtime: python3.6
       Timeout: 60
       Role: !GetAtt
        - LambdaExecutionRole
@@ -168,6 +154,13 @@ Resources:
       SourceArn: !GetAtt
         - CodePipelineEvent
         - Arn
+
+  Badges:
+    Type: Custom::Badges
+    Properties:
+      ServiceToken: !GetAtt Lambda.Arn
+      CodeBuildProjects: !Ref CodeBuildProjects
+      CodePipelines: !Ref CodePipelines
 
   LambdaLogGroup:
     Type: "AWS::Logs::LogGroup"
