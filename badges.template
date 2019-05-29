@@ -72,7 +72,7 @@ Resources:
            return zlib.decompress(base64.b64decode(t),47).decode('ascii').replace('@W@',d['W']).replace('@C@',d['C']).replace('@P1H@',d['P1H']).replace('@P1T@',d['P1T']).replace('@P1L@',d['P1L']).replace('@P2H@',d['P2H']).replace('@P2T@',d['P2T']).replace('@P2L@',d['P2L'])
 
           def u(b,l,p,s):
-           boto3.client('s3').put_object(Bucket=b,Key='{}/{}.svg'.format(l,p),Body=StringIO(badge(l,s)).getvalue().encode(),ContentType='image/svg+xml',ACL='public-read')
+           boto3.client('s3').put_object(Bucket=b,Key='{}/{}.svg'.format(l,p),Body=StringIO(badge(l,s)).getvalue().encode(),ContentType='image/svg+xml',CacheControl='max-age=0,no-cache,no-store,must-revalidate',ACL='public-read')
 
           def o(b,s,r,l):
            if s in r:
