@@ -203,6 +203,7 @@ Resources:
         - Arn
 
   Badges:
+    DependsOn: LambdaLogGroup
     Type: Custom::Badges
     Properties:
       ServiceToken: !GetAtt Lambda.Arn
