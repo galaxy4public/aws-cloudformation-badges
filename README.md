@@ -62,51 +62,28 @@ $ aws cloudformation deploy --template-file badges.template \
 ```
 
 
-Part of another template (nested stack) using JSON notation:
-```json
-…
-"Resources": {
-…
-        "Badges": {
-                "Type": "AWS::CloudFormation::Stack",
-                "Properties": {
-                        "TemplateURL": { "Fn::Sub": "https://${BucketWithTemplate}.s3-${AWS::Region}.amazonaws.com/badges.template" },
-                        "Parameters": {
-                                "CodeBuildProjects": [
-                                        { "Ref": "Project1" },
-                                        { "Ref": "Project2" },
-                                        { "Ref": "Project3" }
-                                ],
-                                "CodePipelines": [
-                                        { "Ref": "Pipeline1" },
-                                        { "Ref": "Pipeline2" }
-                                ]
-                        },
-                        "TimeoutInMinutes": "15"
-                }
-        },
-…
-}
-```
-
-Part of another template (a nested stack) using YAML notation:
+As a part of another template (a nested stack) using YAML notation:
 ```yaml
 …
 Resources:
 …
-    Badges:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: !Sub 'https://${BucketWithTemplate}.s3-${AWS::Region}.amazonaws.com/badges.template'
-            Parameters:
-                CodeBuildProjects:
-                    - Project1
-                    - Project2
-                    - Project3
-                CodePipelines:
-                    - Pipeline1
-                    - Pipeline2
-            TimeoutInMinutes: 15
+  Badges:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 'https://${BucketWithTemplate}.s3-${AWS::Region}.amazonaws.com/badges.template'
+      Parameters:
+        CodeBuildProjects: !Join
+          - ','
+          -
+            - Project1
+            - Project2
+            - Project3
+        CodePipelines: !Join
+          - ','
+          -
+            - Pipeline1
+            - Pipeline2
+      TimeoutInMinutes: 15
 …
 ```
 
