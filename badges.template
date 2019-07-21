@@ -7,39 +7,21 @@ Parameters:
   CodeBuildProjects:
     Description: A list of CodeBuild projects to generate badges for (specify '*' to monitor all or leave empty to disable CodeBuild support)
     Type: List<String>
-    Default: ""
+    Default: ''
   CodePipelines:
     Description: A list of CodePipeline names to generate badges for (specify '*' to monitor all or leave empty to disable CodePipeline support)
     Type: List<String>
-    Default: ""
+    Default: ''
 
 Conditions:
-  useCodeBuild: !Not
-    - !Equals
-      - !Join
-        - ''
-        - !Ref  CodeBuildProjects
-      - ''
-  useCodePipeline: !Not
-    - !Equals
-      - !Join
-        - ''
-        - !Ref  CodePipelines
-      - ''
-  useAllCodeBuild: !Equals
-    - !Join
-      - ''
-      - !Ref  CodeBuildProjects
-    - '*'
-  useAllCodePipeline: !Equals
-    - !Join
-      - ''
-      - !Ref  CodePipelines
-    - '*'
+  useCodeBuild: !Not [ !Equals [ '', !Join [ '', !Ref  CodeBuildProjects ]]]
+  useCodePipeline: !Not [ !Equals [ '', !Join [ '', !Ref  CodePipelines ]]]
+  useSelectedCodeBuild: !Not [ !Equals [ '*', !Join [ '', !Ref  CodeBuildProjects ]]]
+  useSelectedCodePipeline: !Not [ !Equals [ '*', !Join [ '', !Ref  CodePipelines ]]]
 
 Resources:
   Bucket:
-    Type: 'AWS::S3::Bucket'
+    Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
       AccessControl: Private
@@ -102,7 +84,7 @@ Resources:
             print('FAILED ({})'.format(sys.exc_info()));return
            print('SUCCESS s3://{}/{}/{}'.format(b,l,p));return
       Handler: index.handler
-      Runtime: python3.6
+      Runtime: python3.7
       Timeout: 60
       Role: !GetAtt
        - LambdaExecutionRole
@@ -110,7 +92,7 @@ Resources:
 
   CodeBuildEvent:
     Condition: useCodeBuild
-    Type: "AWS::Events::Rule"
+    Type: AWS::Events::Rule
     Properties:
       Description: Monitors for the CodeBuild state changes
       EventPattern:
@@ -118,35 +100,18 @@ Resources:
           - aws.codebuild
         detail-type:
           - CodeBuild Build State Change
-        detail:
-          project-name: !Ref CodeBuildProjects
+        detail: !If
+          - useSelectedCodeBuild
+          - project-name: !Ref CodeBuildProjects
+          - !Ref 'AWS::NoValue'
       Targets:
         -
-          Arn: !GetAtt
-            - Lambda
-            - Arn
-          Id: LambdaForCodeBuild
-
-  CodeBuildEvent:
-    Condition: useAllCodeBuild
-    Type: "AWS::Events::Rule"
-    Properties:
-      Description: Monitors for the CodeBuild state changes
-      EventPattern:
-        source:
-          - aws.codebuild
-        detail-type:
-          - CodeBuild Build State Change
-      Targets:
-        -
-          Arn: !GetAtt
-            - Lambda
-            - Arn
+          Arn: !GetAtt Lambda.Arn
           Id: LambdaForCodeBuild
 
   CodePipelineEvent:
     Condition: useCodePipeline
-    Type: "AWS::Events::Rule"
+    Type: AWS::Events::Rule
     Properties:
       Description: Monitors for the CodePipeline state changes
       EventPattern:
@@ -154,53 +119,32 @@ Resources:
           - aws.codepipeline
         detail-type:
           - CodePipeline Pipeline Execution State Change
-        detail:
-          pipeline: !Ref CodePipelines
+        detail: !If
+          - useSelectedCodePipeline
+          - pipeline: !Ref CodePipelines
+          - !Ref 'AWS::NoValue'
       Targets:
         -
-          Arn: !GetAtt
-            - Lambda
-            - Arn
-          Id: LambdaForCodeBuild
-
-  CodePipelineEvent:
-    Condition: useAllCodePipeline
-    Type: "AWS::Events::Rule"
-    Properties:
-      Description: Monitors for the CodePipeline state changes
-      EventPattern:
-        source:
-          - aws.codepipeline
-        detail-type:
-          - CodePipeline Pipeline Execution State Change
-      Targets:
-        -
-          Arn: !GetAtt
-            - Lambda
-            - Arn
+          Arn: !GetAtt Lambda.Arn
           Id: LambdaForCodeBuild
 
   PermissionForEventsToInvokeLambda1:
     Condition: useCodeBuild
-    Type: "AWS::Lambda::Permission"
+    Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !Ref Lambda
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
-      SourceArn: !GetAtt
-        - CodeBuildEvent
-        - Arn
+      SourceArn: !GetAtt CodeBuildEvent.Arn
 
   PermissionForEventsToInvokeLambda2:
     Condition: useCodePipeline
-    Type: "AWS::Lambda::Permission"
+    Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !Ref Lambda
       Action: lambda:InvokeFunction
       Principal: events.amazonaws.com
-      SourceArn: !GetAtt
-        - CodePipelineEvent
-        - Arn
+      SourceArn: !GetAtt CodePipelineEvent.Arn
 
   Badges:
     DependsOn: LambdaLogGroup
@@ -211,10 +155,10 @@ Resources:
       CodePipelines: !Ref CodePipelines
 
   LambdaLogGroup:
-    Type: "AWS::Logs::LogGroup"
+    Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
     Properties: 
-      LogGroupName: !Sub '/aws/lambda/${Lambda}'
+      LogGroupName: !Sub /aws/lambda/${Lambda}
       RetentionInDays: 365
 
   LambdaExecutionRole:
@@ -238,12 +182,12 @@ Resources:
               - Sid: CloudWatchLogs
                 Effect: Allow
                 Action:
-                  - 'logs:CreateLogGroup'
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
                 Resource:
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-*'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-*:*'
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-*
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${AWS::StackName}-*:*
               - Sid: UpdateBadgesInS3
                 Effect: Allow
                 Action:
@@ -252,9 +196,7 @@ Resources:
                 Resource:
                   - !Join
                     - ''
-                    - - !GetAtt
-                        - Bucket
-                        - Arn
+                    - - !GetAtt Bucket.Arn
                       - '/*'
 
 Outputs:
@@ -264,25 +206,17 @@ Outputs:
 
   BucketArn:
     Description: The ARN of the S3 bucket where badges are created
-    Value: !GetAtt
-      - Bucket
-      - Arn
+    Value: !GetAtt Bucket.Arn
 
   BucketUrl:
     Description: The IPv4 domain name of the S3 Bucket where badges are created
-    Value: !GetAtt
-      - Bucket
-      - DomainName
+    Value: !GetAtt Bucket.DomainName
 
   BucketDualStackUrl:
     Description: The IPv6 domain name of the S3 Bucket where badges are created
-    Value: !GetAtt
-      - Bucket
-      - DualStackDomainName
+    Value: !GetAtt Bucket.DualStackDomainName
 
   BucketWebsiteUrl:
     Description: The static website endpoint URL for the S3 Bucket where badges are created
-    Value: !GetAtt
-      - Bucket
-      - WebsiteURL
+    Value: !GetAtt Bucket.WebsiteURL
 
