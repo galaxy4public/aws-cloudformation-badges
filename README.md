@@ -8,7 +8,7 @@ This template is an all-in-one solution that ensures that all AWS resources
 required to support badges are under CloudFormation control.
 
 The stack created with this template defines the minimaly required set of
-permissions for the Lambd role to generate badges.  Moreover, the stack
+permissions for the Lambda role to generate badges.  Moreover, the stack
 pre-generates the "unknown status" badges for all specified CodePipelines
 and CodeBuild during the stack creation time, so you can link to the
 badges right away.
@@ -17,6 +17,23 @@ Unfortunately, due to the CloudFormation limitation on the size of inline
 Lambda the code was highly optimised to fit into the 4Kb limit (shame on
 you AWS for counting the leading whitespace toward this limit in YAML
 templates!).
+
+In November 2018, AWS introduced [A new layer to block S3 public access](https://aws.amazon.com/blogs/aws/amazon-s3-block-public-access-another-layer-of-protection-for-your-accounts-and-buckets/).
+The effect of this change is that if you leverage this new layer for
+your account then you would not be able to reach the generated badges via
+direct URLs to S3.  The stack properly defines the generated badges as
+publicly accessible resources, but the new layer will ignore that. So you
+have a couple of options:
+
+  1. (not recommended) Disable the "Block public access" feature for the
+     "new" bucket policies and ACLs;
+  2. Create a CloudFront distribution that uses the badges S3 bucket as
+     origin and use the distribution to serve the badges.  Read the
+     official AWS documentation on [Origin Access Identity](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html#private-content-creating-oai) to understand
+     how this can be configured, especially read the "Overview of Origin
+     Access Identity Setup" section since it provides a link to the
+     [practical tutorial](http://improve.dk/how-to-set-up-and-serve-private-content-using-s3/) on how to set it up (although the howto is ASP.NET
+     specific a bit).
 
 Synopsis
 --------
@@ -53,7 +70,7 @@ Part of another template (nested stack) using JSON notation:
         "Badges": {
                 "Type": "AWS::CloudFormation::Stack",
                 "Properties": {
-                        "TemplateURL": { "Fn::Sub": "https://s3-${AWS::Region}.amazonaws.com/${BucketWithTemplate}/badges.template" },
+                        "TemplateURL": { "Fn::Sub": "https://${BucketWithTemplate}.s3-${AWS::Region}.amazonaws.com/badges.template" },
                         "Parameters": {
                                 "CodeBuildProjects": [
                                         { "Ref": "Project1" },
@@ -72,7 +89,7 @@ Part of another template (nested stack) using JSON notation:
 }
 ```
 
-Part of anothr template (a nested stack) using YAML notation:
+Part of another template (a nested stack) using YAML notation:
 ```yaml
 …
 Resources:
@@ -80,7 +97,7 @@ Resources:
     Badges:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Sub 'https://s3-${AWS::Region}.amazonaws.com/${BucketWithTemplate}/badges.template'
+            TemplateURL: !Sub 'https://${BucketWithTemplate}.s3-${AWS::Region}.amazonaws.com/badges.template'
             Parameters:
                 CodeBuildProjects:
                     - Project1
